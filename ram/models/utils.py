@@ -128,8 +128,7 @@ class GroupWiseLinear(nn.Module):
 
 
 def init_tokenizer():
-    # tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    tokenizer = BertTokenizer.from_pretrained('/home/notebook/data/group/LowLevelLLM/LLM/bert-base-uncased', local_files_only=True)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     tokenizer.add_special_tokens({'bos_token': '[DEC]'})
     tokenizer.add_special_tokens({'additional_special_tokens': ['[ENC]']})
     tokenizer.enc_token_id = tokenizer.additional_special_tokens_ids[0]
@@ -173,14 +172,20 @@ def is_url(url_or_filename):
     return parsed.scheme in ("http", "https")
 
 
+def checkpoint_map_location():
+    if torch.cuda.is_available():
+        return torch.device("cuda", torch.cuda.current_device())
+    return torch.device("cpu")
+
+
 def load_checkpoint(model, url_or_filename):
     if is_url(url_or_filename):
         cached_file = download_cached_file(url_or_filename,
                                            check_hash=False,
                                            progress=True)
-        checkpoint = torch.load(cached_file, map_location='cpu')
+        checkpoint = torch.load(cached_file, map_location=checkpoint_map_location(), weights_only=False)
     elif os.path.isfile(url_or_filename):
-        checkpoint = torch.load(url_or_filename, map_location='cpu')
+        checkpoint = torch.load(url_or_filename, map_location=checkpoint_map_location(), weights_only=False)
     else:
         raise RuntimeError('checkpoint url or path is invalid')
 
@@ -214,9 +219,9 @@ def load_checkpoint_swinlarge_condition(model, url_or_filename, kwargs):
         cached_file = download_cached_file(url_or_filename,
                                            check_hash=False,
                                            progress=True)
-        checkpoint = torch.load(cached_file, map_location='cpu')
+        checkpoint = torch.load(cached_file, map_location=checkpoint_map_location(), weights_only=False)
     elif os.path.isfile(url_or_filename):
-        checkpoint = torch.load(url_or_filename, map_location='cpu')
+        checkpoint = torch.load(url_or_filename, map_location=checkpoint_map_location(), weights_only=False)
     else:
         raise RuntimeError('checkpoint url or path is invalid')
 
@@ -252,9 +257,9 @@ def load_checkpoint_swinbase(model, url_or_filename, kwargs):
         cached_file = download_cached_file(url_or_filename,
                                            check_hash=False,
                                            progress=True)
-        checkpoint = torch.load(cached_file, map_location='cpu')
+        checkpoint = torch.load(cached_file, map_location=checkpoint_map_location(), weights_only=False)
     elif os.path.isfile(url_or_filename):
-        checkpoint = torch.load(url_or_filename, map_location='cpu')
+        checkpoint = torch.load(url_or_filename, map_location=checkpoint_map_location(), weights_only=False)
     else:
         raise RuntimeError('checkpoint url or path is invalid')
 
@@ -290,9 +295,9 @@ def load_checkpoint_swinlarge(model, url_or_filename, kwargs):
         cached_file = download_cached_file(url_or_filename,
                                            check_hash=False,
                                            progress=True)
-        checkpoint = torch.load(cached_file, map_location='cpu')
+        checkpoint = torch.load(cached_file, map_location=checkpoint_map_location(), weights_only=False)
     elif os.path.isfile(url_or_filename):
-        checkpoint = torch.load(url_or_filename, map_location='cpu')
+        checkpoint = torch.load(url_or_filename, map_location=checkpoint_map_location(), weights_only=False)
     else:
         raise RuntimeError('checkpoint url or path is invalid')
 

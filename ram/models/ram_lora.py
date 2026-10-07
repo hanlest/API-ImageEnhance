@@ -338,7 +338,11 @@ def ram(pretrained='', pretrained_condition='', **kwargs):
         print('vit:', kwargs['vit'])
     
     if pretrained_condition:
-        model.load_state_dict(torch.load(pretrained_condition), strict=False)
+        lora_ckpt = torch.load(
+            pretrained_condition, map_location="cpu", weights_only=False
+        )
+        model.load_state_dict(lora_ckpt, strict=False)
+        del lora_ckpt
         print(f'load lora from {pretrained_condition}')
 
     return model

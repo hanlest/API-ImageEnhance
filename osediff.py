@@ -248,22 +248,31 @@ class OSEDiff_test(torch.nn.Module):
 
         self.args = args
         self.device =  torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.weight_dtype = torch.float16 if args.mixed_precision == "fp16" else torch.float32
+        hf_load_kwargs = {"low_cpu_mem_usage": True, "torch_dtype": self.weight_dtype}
+        if self.weight_dtype == torch.float16:
+            hf_load_kwargs["variant"] = "fp16"
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.args.pretrained_model_name_or_path, subfolder="tokenizer")
-        self.text_encoder = CLIPTextModel.from_pretrained(self.args.pretrained_model_name_or_path, subfolder="text_encoder")
+        self.text_encoder = CLIPTextModel.from_pretrained(
+            self.args.pretrained_model_name_or_path, subfolder="text_encoder", **hf_load_kwargs
+        )
         self.noise_scheduler = DDPMScheduler.from_pretrained(args.pretrained_model_name_or_path, subfolder="scheduler")
         self.noise_scheduler.set_timesteps(1, device="cuda")
-        self.vae = AutoencoderKL.from_pretrained(self.args.pretrained_model_name_or_path, subfolder="vae")
-        self.unet = UNet2DConditionModel.from_pretrained(self.args.pretrained_model_name_or_path, subfolder="unet")
+        self.vae = AutoencoderKL.from_pretrained(self.args.pretrained_model_name_or_path, subfolder="vae", **hf_load_kwargs)
+        self.unet = UNet2DConditionModel.from_pretrained(
+            self.args.pretrained_model_name_or_path, subfolder="unet", **hf_load_kwargs
+        )
 
         # vae tile
         self._init_tiled_vae(encoder_tile_size=args.vae_encoder_tiled_size, decoder_tile_size=args.vae_decoder_tiled_size)
 
-        self.weight_dtype = torch.float32
-        if args.mixed_precision == "fp16":
-            self.weight_dtype = torch.float16
-
-        osediff = torch.load(args.osediff_path)
+        ckpt_map = self.device if torch.cuda.is_available() else "cpu"
+        osediff = torch.load(args.osediff_path, map_location=ckpt_map, weights_only=False)
         self.load_ckpt(osediff)
+        del osediff
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
         # merge lora
         if self.args.merge_and_unload_lora:
@@ -464,7 +473,7 @@ class OSEDiff_inference_time(torch.nn.Module):
         if args.mixed_precision == "fp16":
             self.weight_dtype = torch.float16
 
-        osediff = torch.load(args.osediff_path)
+        osediff = torch.load(args.osediff_path, weights_only=False)
         self.load_ckpt(osediff)
 
         # merge lora

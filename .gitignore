@@ -1,0 +1,16 @@
+.venv/
+.vscode/
+__pycache__/
+*.py[cod]
+.pm2/
+
+# Pesos locales (descargar aparte)
+preset/models/stable-diffusion-2-1-base/
+preset/models/ram_swin_large_14m.pth
+
+# Salidas de prueba
+preset/datasets/test_dataset/output/
+preset/datasets/test_dataset/output_same_size/
+preset/datasets/test_dataset/output_w1080/
+
+pm2-system.json
